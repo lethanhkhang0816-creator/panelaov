@@ -261,9 +261,9 @@
             alert("✅ Đã sắp xếp danh sách tài khoản theo số đuôi tăng dần!");
         }
 
-        /* --- LOGIN GARENA SSO: MỞ WEB VÀ TỰ ĐỘNG COPY TÊN TÀI KHOẢN --- */
+        /* --- LOGIN GARENA SSO: MỞ WEB VÀ TỰ ĐỘNG COPY TÊN TÀI KHOẢN (USERNAME) --- */
         function openGarenaSso(username) {
-            // Copy Username vào clipboard để bấm Ctrl+V vào ô tài khoản
+            // Đảm bảo lệnh này copy TÊN TÀI KHOẢN vào clipboard
             navigator.clipboard.writeText(username);
             
             // Link SSO Garena chính xác
