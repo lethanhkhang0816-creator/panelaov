@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Quản Lý Acc Liên Quân & Garena Check</title>
+    <title>Panel Quản Lý Acc Liên Quân & Garena SSO</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -123,7 +123,7 @@
                                 TÀI KHOẢN (TK) ⇕
                             </th>
                             <th class="py-3.5 px-4">MẬT KHẨU (MK)</th>
-                            <th class="py-3.5 px-4 text-center w-36">TEST GARENA WEB</th>
+                            <th class="py-3.5 px-4 text-center w-36">LOGIN GARENA SSO</th>
                             <th class="py-3.5 px-4">TÊN NHÂN VẬT</th>
                             <th class="py-3.5 px-4 text-center w-28">LEVEL</th>
                             <th class="py-3.5 px-4 text-center w-28">BAND</th>
@@ -248,20 +248,7 @@
             localStorage.setItem("lq_accounts_standalone", JSON.stringify(masterAccounts));
         }
 
-        /* --- TEST LOGIN GARENA WEB --- */
-        function testGarenaLogin(username, password) {
-            // Copy mật khẩu hoặc thông tin vào clipboard để tiện paste nhanh
-            navigator.clipboard.writeText(password);
-            
-            // Link OAuth Garena chính xác theo yêu cầu
-            const garenaUrl = "https://auth.garena.com/universal/oauth?client_id=200016&response_type=token&redirect_uri=https%3A%2F%2Fauth.member.garena.vn%2Fcallback&all_platforms=1&platform=1&locale=vi-VN&state=%7B%22app_id%22%3A200016%2C%22nonce%22%3A165224998%7D";
-            
-            // Mở tab đăng nhập Garena
-            window.open(garenaUrl, '_blank');
-            alert(`🌐 Đã mở trang đăng nhập Garena!\n\n- Tài khoản: ${username}\n- Mật khẩu: Đã được copy tự động vào bộ nhớ tạm (Chỉ cần nhấn Ctrl+V để dán).`);
-        }
-
-        /* SẮP XẾP THEO SỐ ĐUÔI TĂNG DẦN */
+        /* --- SẮP XẾP SỐ ĐUÔI TĂNG DẦN --- */
         function sortAccountsBySuffix() {
             if (masterAccounts.length === 0) return alert("Chưa có tài khoản nào để sắp xếp!");
 
@@ -274,7 +261,19 @@
             alert("✅ Đã sắp xếp danh sách tài khoản theo số đuôi tăng dần!");
         }
 
-        /* LEVEL MẶC ĐỊNH LÀ 1 KHI THÊM MỚI */
+        /* --- LOGIN GARENA SSO (URL MỚI + COPY USERNAME) --- */
+        function testGarenaLogin(username, password) {
+            // Tự động copy Tên đăng nhập vào clipboard để bấm Ctrl+V vào web Garena SSO
+            navigator.clipboard.writeText(username);
+            
+            // Link SSO Garena theo yêu cầu mới của bạn
+            const garenaSsoUrl = "https://sso.garena.com/universal/login?app_id=10100&redirect_uri=https%3A%2F%2Faccount.garena.com%2F&locale=vi-VN";
+            
+            window.open(garenaSsoUrl, '_blank');
+            alert(`🌐 Đã mở trang SSO Garena!\n\n- Tài khoản: [ ${username} ] -> ĐÃ COPY TỰ ĐỘNG!\n- Mật khẩu: ${password}\n\n👉 Bạn chỉ cần bấm Ctrl+V để dán tài khoản vào ô đăng nhập.`);
+        }
+
+        /* --- THÊM TÀI KHOẢN (LEVEL MẶC ĐỊNH 1) --- */
         function parseAndAddLines(textLines, defaultLevel = 1) {
             let count = 0;
             textLines.forEach(line => {
@@ -368,6 +367,7 @@
             }
         }
 
+        /* --- XÓA HÀNG LOẠT --- */
         function toggleSelectAcc(id, isChecked) {
             if (isChecked) {
                 selectedAccIds.add(id);
@@ -481,8 +481,8 @@
                     <td class="py-3 px-4 font-mono text-slate-300 font-semibold">${acc.username}</td>
                     <td class="py-3 px-4 font-mono text-slate-400">••••••••</td>
                     <td class="py-3 px-4 text-center">
-                        <button onclick="testGarenaLogin('${acc.username}', '${acc.password}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded text-[11px] font-semibold transition flex items-center gap-1 mx-auto shadow" title="Mở trang Garena OAuth và tự động copy pass">
-                            🌐 Login Web
+                        <button onclick="testGarenaLogin('${acc.username}', '${acc.password}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded text-[11px] font-semibold transition flex items-center gap-1 mx-auto shadow" title="Mở trang Garena SSO và tự động copy username">
+                            🌐 Login SSO
                         </button>
                     </td>
                     <td class="py-3 px-4 font-semibold text-emerald-300">${acc.gameName}</td>
