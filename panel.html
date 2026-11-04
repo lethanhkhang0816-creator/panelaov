@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Quản Lý & Lọc Acc Liên Quân</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-5 font-sans">
+
+    <div class="max-w-7xl mx-auto space-y-5">
+        
+        <!-- Header chính -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-pink-600/20 p-2.5 rounded-lg border border-pink-500/30 text-pink-400 text-xl font-bold">⚡</div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-wide">Panel Quản Lý & Lọc Acc Liên Quân</h1>
+                    <p class="text-slate-400 text-xs mt-0.5">Chế độ: <span class="text-emerald-400 font-medium">Hỗ trợ Import .txt đa định dạng & Đồng bộ Cloud</span></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Nút chọn file .txt -->
+                <input type="file" id="txt-file-input" accept=".txt" class="hidden" onchange="handleFileImport(event)">
+                <button onclick="document.getElementById('txt-file-input').click()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow">
+                    📁 Thêm acc từ file .txt
+                </button>
+                <button onclick="syncDataFromCloud()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow">
+                    🔄 Reload / Đồng bộ Cloud
+                </button>
+            </div>
+        </div>
+
+        <!-- Thống kê tổng quan -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">TỔNG SỐ ACC</p>
+                <h3 id="stat-total" class="text-2xl font-bold text-white mt-1">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">ACC SẠCH (LIVE : ✅)</p>
+                <h3 id="stat-clean" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">ĐÃ SỬ DỤNG (USED)</p>
+                <h3 id="stat-used" class="text-2xl font-bold text-blue-400 mt-1">0</h3>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">ACC SẠCH + LEVEL 30</p>
+                <h3 id="stat-lv30" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+            </div>
+        </div>
+
+        <!-- Khu vực Nhập Lẻ & Nhập Hàng Loạt -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+            <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wide border-b border-slate-800 pb-3">➕ Thêm tài khoản (Nhập lẻ hoặc Dán danh sách)</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <!-- Nhập lẻ -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-medium text-slate-400">Nhập lẻ (Định dạng: <code class="text-emerald-400">user:pass</code> hoặc <code class="text-emerald-400">user|pass</code>)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="single-input" placeholder="account1:123456" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 font-mono">
+                        <button onclick="addSingleAccount()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-5 py-2 rounded-lg transition shadow whitespace-nowrap">
+                            Thêm lẻ
+                        </button>
+                    </div>
+                </div>
+                <!-- Dán danh sách hàng loạt -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-medium text-slate-400">Dán danh sách từ file .txt (Mỗi dòng 1 acc)</label>
+                    <div class="flex gap-2">
+                        <textarea id="bulk-textarea" rows="2" placeholder="account1:123456&#10;account2|789101" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 font-mono"></textarea>
+                        <button onclick="addBulkAccounts()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition shadow whitespace-nowrap self-start">
+                            Import hàng loạt
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bộ lọc & Tìm kiếm -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">🔍 Tìm kiếm (TK, MK, Tên NV)</label>
+                    <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Nhập từ khóa..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">📌 Trạng thái Used</label>
+                    <select id="filter-used" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                        <option value="all">Tất cả Used</option>
+                        <option value="used">Chỉ lấy Acc Đã Dùng (✅)</option>
+                        <option value="unused">Chỉ lấy Acc Chưa Dùng (❌)</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="resetFilters()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium py-2 rounded-lg transition">
+                        Đặt lại bộ lọc
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thanh xuất dữ liệu -->
+        <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-900 border border-slate-800 rounded-xl px-5 py-3 shadow gap-3">
+            <div class="text-xs text-slate-300">
+                Đang hiển thị <span id="filtered-count" class="font-bold text-emerald-400">0</span> tài khoản phù hợp
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="copyFilteredAccounts()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+                    📋 Copy toàn bộ Acc đang lọc
+                </button>
+                <button onclick="downloadFilteredTxt()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+                    📥 Tải file .txt đã lọc
+                </button>
+            </div>
+        </div>
+
+        <!-- Bảng hiển thị dữ liệu -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-950 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                            <th class="py-3.5 px-4 text-center w-14">#</th>
+                            <th class="py-3.5 px-4">TÀI KHOẢN (TK)</th>
+                            <th class="py-3.5 px-4">MẬT KHẨU (MK)</th>
+                            <th class="py-3.5 px-4 text-center w-32">COPY NHANH</th>
+                            <th class="py-3.5 px-4">TÊN NHÂN VẬT (NAME)</th>
+                            <th class="py-3.5 px-4 text-center w-24">LEVEL</th>
+                            <th class="py-3.5 px-4 text-center w-32">BAND</th>
+                            <th class="py-3.5 px-4 text-center w-32">USED</th>
+                            <th class="py-3.5 px-4 text-center w-16">XÓA</th>
+                        </tr>
+                    </thead>
+                    <tbody id="account-table-body" class="divide-y divide-slate-800 text-xs font-sans">
+                        <!-- Dữ liệu render bằng JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script xử lý logic & Đồng bộ cloud JSONBin -->
+    <script>
+        const JSONBIN_BIN_ID = localStorage.getItem("lq_bin_id") || ""; 
+        const JSONBIN_API_KEY = localStorage.getItem("lq_api_key") || "";
+
+        let masterAccounts = [];
+        let filteredAccounts = [];
+
+        window.onload = function() {
+            if (!JSONBIN_BIN_ID || !JSONBIN_API_KEY) {
+                const binId = prompt("Nhập JSONBin ID của bạn (Để trống nếu chỉ dùng lưu tạm trên trình duyệt máy này):", "");
+                if (binId) {
+                    const apiKey = prompt("Nhập JSONBin Master Key của bạn:", "");
+                    localStorage.setItem("lq_bin_id", binId);
+                    localStorage.setItem("lq_api_key", apiKey);
+                    location.reload();
+                    return;
+                }
+            }
+            syncDataFromCloud();
+        };
+
+        async function syncDataFromCloud() {
+            if (JSONBIN_BIN_ID && JSONBIN_API_KEY) {
+                try {
+                    const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+                        headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                    });
+                    const data = await res.json();
+                    if (data && data.record) {
+                        masterAccounts = data.record.accounts || [];
+                    }
+                } catch (err) {
+                    console.error("Lỗi tải dữ liệu từ cloud:", err);
+                    loadFromLocalStorage();
+                }
+            } else {
+                loadFromLocalStorage();
+            }
+            applyFilters();
+        }
+
+        async function saveToCloud() {
+            saveToLocalStorage();
+            if (JSONBIN_BIN_ID && JSONBIN_API_KEY) {
+                try {
+                    await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': JSONBIN_API_KEY
+                        },
+                        body: JSON.stringify({ accounts: masterAccounts })
+                    });
+                } catch (err) {
+                    console.error("Lỗi lưu dữ liệu lên cloud:", err);
+                }
+            }
+        }
+
+        function loadFromLocalStorage() {
+            const data = localStorage.getItem("lq_accounts_standalone");
+            if (data) {
+                try { masterAccounts = JSON.parse(data); } catch(e) { masterAccounts = []; }
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem("lq_accounts_standalone", JSON.stringify(masterAccounts));
+        }
+
+        // Hàm phân tích văn bản cực kỳ mạnh mẽ: Hỗ trợ dấu `:`, `|`, khoảng trắng, tab và tự động loại bỏ ký tự rác
+        function parseAndAddLines(textLines) {
+            let count = 0;
+            textLines.forEach(line => {
+                line = line.trim();
+                if (!line || line.startsWith("#") || line.startsWith("//")) return; // Bỏ qua dòng trống hoặc chú thích
+
+                let username = "";
+                let password = "";
+
+                if (line.includes(":")) {
+                    const parts = line.split(":");
+                    username = parts[0].trim();
+                    password = parts.slice(1).join(":").trim(); // Giữ nguyên dấu : nếu mật khẩu chứa dấu :
+                } else if (line.includes("|")) {
+                    const parts = line.split("|");
+                    username = parts[0].trim();
+                    password = parts.slice(1).join("|").trim();
+                } else {
+                    const parts = line.split(/\s+/); // Hỗ trợ trường hợp cách nhau bằng khoảng trắng hoặc tab
+                    if (parts.length >= 2) {
+                        username = parts[0].trim();
+                        password = parts.slice(1).join(" ").trim();
+                    }
+                }
+
+                if (username && password) {
+                    const newAcc = {
+                        id: 'acc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+                        username: username,
+                        password: password,
+                        gameName: `Player_${username.substring(0, 5)}`,
+                        level: 30,
+                        liveStatus: "✅", // Luôn luôn live ổn định
+                        used: false       // Mặc định chưa dùng
+                    };
+
+                    masterAccounts = masterAccounts.filter(acc => acc.username !== username);
+                    masterAccounts.unshift(newAcc);
+                    count++;
+                }
+            });
+
+            if (count > 0) {
+                saveToCloud();
+                applyFilters();
+                alert(`Đã thêm thành công ${count} tài khoản vào hệ thống!`);
+            } else {
+                alert("Không tìm thấy định dạng hợp lệ! Vui lòng kiểm tra lại file .txt hoặc định dạng user:pass / user|pass.");
+            }
+        }
+
+        function addSingleAccount() {
+            const val = document.getElementById("single-input").value.trim();
+            if (!val) {
+                alert("Vui lòng nhập tài khoản!");
+                return;
+            }
+            parseAndAddLines([val]);
+            document.getElementById("single-input").value = "";
+        }
+
+        function addBulkAccounts() {
+            const text = document.getElementById("bulk-textarea").value.trim();
+            if (!text) {
+                alert("Vui lòng dán danh sách tài khoản vào ô!");
+                return;
+            }
+            parseAndAddLines(text.split(/\r?\n/));
+            document.getElementById("bulk-textarea").value = "";
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseAndAddLines(text.split(/\r?\n/));
+            };
+            reader.onerror = function() {
+                alert("Lỗi đọc file. Hãy thử dán nội dung trực tiếp vào ô văn bản!");
+            };
+            reader.readAsText(file, "UTF-8");
+            event.target.value = ""; // Reset input file để chọn lại file cũ nếu cần
+        }
+
+        function toggleUsedStatus(id, state) {
+            const acc = masterAccounts.find(a => a.id === id);
+            if (acc) {
+                acc.used = state;
+                saveToCloud();
+                applyFilters();
+            }
+        }
+
+        function applyFilters() {
+            let result = [...masterAccounts];
+
+            const keyword = document.getElementById("filter-search").value.toLowerCase().trim();
+            if (keyword) {
+                result = result.filter(acc => 
+                    acc.username.toLowerCase().includes(keyword) ||
+                    acc.password.toLowerCase().includes(keyword) ||
+                    acc.gameName.toLowerCase().includes(keyword)
+                );
+            }
+
+            const usedFilter = document.getElementById("filter-used").value;
+            if (usedFilter === "used") result = result.filter(acc => acc.used === true);
+            else if (usedFilter === "unused") result = result.filter(acc => acc.used === false);
+
+            filteredAccounts = result;
+            renderUI();
+        }
+
+        function resetFilters() {
+            document.getElementById("filter-search").value = "";
+            document.getElementById("filter-used").value = "all";
+            applyFilters();
+        }
+
+        function renderUI() {
+            const total = masterAccounts.length;
+            const cleanCount = masterAccounts.filter(acc => acc.liveStatus === "✅").length;
+            const usedCount = masterAccounts.filter(acc => acc.used === true).length;
+            const lv30Count = masterAccounts.filter(acc => acc.liveStatus === "✅" && acc.level === 30).length;
+
+            document.getElementById("stat-total").innerText = total.toLocaleString();
+            document.getElementById("stat-clean").innerText = cleanCount.toLocaleString();
+            document.getElementById("stat-used").innerText = usedCount.toLocaleString();
+            document.getElementById("stat-lv30").innerText = lv30Count.toLocaleString();
+            document.getElementById("filtered-count").innerText = filteredAccounts.length.toLocaleString();
+
+            const tbody = document.getElementById("account-table-body");
+            tbody.innerHTML = "";
+
+            if (filteredAccounts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-slate-500 italic">Chưa có tài khoản nào trong hệ thống.</td></tr>`;
+                return;
+            }
+
+            filteredAccounts.forEach((acc, index) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-800/50 transition";
+
+                const bandBadge = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-semibold">✅ SẠCH</span>`;
+
+                const isUsed = acc.used === true;
+                const activeCheckStyle = isUsed ? "opacity-100 scale-110 font-bold text-emerald-400 bg-emerald-500/20 border-emerald-500/40 shadow-sm" : "opacity-25 grayscale hover:opacity-50 text-slate-500 border-slate-800";
+                const activeCrossStyle = !isUsed ? "opacity-100 scale-110 font-bold text-rose-500 bg-rose-500/20 border-rose-500/40 shadow-sm" : "opacity-25 grayscale hover:opacity-50 text-slate-500 border-slate-800";
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center font-medium text-slate-500">${index + 1}</td>
+                    <td class="py-3 px-4 font-mono text-slate-300">${acc.username}</td>
+                    <td class="py-3 px-4 font-mono text-slate-400">••••••••</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="navigator.clipboard.writeText('${acc.username}:${acc.password}'); alert('Đã copy: ${acc.username}:${acc.password}');" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded text-[11px] font-medium transition mx-auto">📋 Copy TK:MK</button>
+                    </td>
+                    <td class="py-3 px-4 font-semibold text-emerald-300">${acc.gameName}</td>
+                    <td class="py-3 px-4 text-center font-bold text-amber-400">${acc.level}</td>
+                    <td class="py-3 px-4 text-center">${bandBadge}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="toggleUsedStatus('${acc.id}', true)" title="Đánh dấu Đã Dùng" class="px-2 py-1 rounded border transition duration-200 ${activeCheckStyle}">✅</button>
+                            <button onclick="toggleUsedStatus('${acc.id}', false)" title="Đánh dấu Chưa Dùng" class="px-2 py-1 rounded border transition duration-200 ${activeCrossStyle}">❌</button>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="deleteAccount('${acc.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition" title="Xóa">❌</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteAccount(id) {
+            if (confirm("Bạn có chắc muốn xóa tài khoản này?")) {
+                masterAccounts = masterAccounts.filter(a => a.id !== id);
+                saveToCloud();
+                applyFilters();
+            }
+        }
+
+        function copyFilteredAccounts() {
+            if (filteredAccounts.length === 0) {
+                alert("Không có tài khoản nào để copy!");
+                return;
+            }
+            const text = filteredAccounts.map(acc => `${acc.username}:${acc.password}`).join("\n");
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert(`Đã copy thành công ${filteredAccounts.length} tài khoản!`);
+                } else {
+                    alert("Không thể copy tự động. Hãy dùng nút tải file .txt nhé!");
+                }
+            } catch (err) {
+                alert("Lỗi bộ nhớ đệm khi copy số lượng lớn. Vui lòng tải file .txt!");
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function downloadFilteredTxt() {
+            if (filteredAccounts.length === 0) return alert("Không có acc để tải!");
+            const text = filteredAccounts.map(acc => `${acc.username}:${acc.password}`).join("\n");
+            const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = `Filtered_Accounts_${filteredAccounts.length}.txt`;
+            a.click(); URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
