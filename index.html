@@ -123,7 +123,7 @@
                                 TÀI KHOẢN (TK) ⇕
                             </th>
                             <th class="py-3.5 px-4">MẬT KHẨU (MK)</th>
-                            <th class="py-3.5 px-4 text-center w-36">LOGIN GARENA SSO</th>
+                            <th class="py-3.5 px-4 text-center w-40">LOGIN GARENA SSO</th>
                             <th class="py-3.5 px-4">TÊN NHÂN VẬT</th>
                             <th class="py-3.5 px-4 text-center w-28">LEVEL</th>
                             <th class="py-3.5 px-4 text-center w-28">BAND</th>
@@ -261,16 +261,15 @@
             alert("✅ Đã sắp xếp danh sách tài khoản theo số đuôi tăng dần!");
         }
 
-        /* --- LOGIN GARENA SSO (URL MỚI + COPY USERNAME) --- */
-        function testGarenaLogin(username, password) {
-            // Tự động copy Tên đăng nhập vào clipboard để bấm Ctrl+V vào web Garena SSO
+        /* --- LOGIN GARENA SSO: MỞ WEB VÀ TỰ ĐỘNG COPY TÊN TÀI KHOẢN --- */
+        function openGarenaSso(username) {
+            // Copy Username vào clipboard trước để bạn Ctrl+V vào web SSO
             navigator.clipboard.writeText(username);
             
-            // Link SSO Garena theo yêu cầu mới của bạn
+            // Link SSO Garena theo yêu cầu
             const garenaSsoUrl = "https://sso.garena.com/universal/login?app_id=10100&redirect_uri=https%3A%2F%2Faccount.garena.com%2F&locale=vi-VN";
             
             window.open(garenaSsoUrl, '_blank');
-            alert(`🌐 Đã mở trang SSO Garena!\n\n- Tài khoản: [ ${username} ] -> ĐÃ COPY TỰ ĐỘNG!\n- Mật khẩu: ${password}\n\n👉 Bạn chỉ cần bấm Ctrl+V để dán tài khoản vào ô đăng nhập.`);
         }
 
         /* --- THÊM TÀI KHOẢN (LEVEL MẶC ĐỊNH 1) --- */
@@ -481,9 +480,14 @@
                     <td class="py-3 px-4 font-mono text-slate-300 font-semibold">${acc.username}</td>
                     <td class="py-3 px-4 font-mono text-slate-400">••••••••</td>
                     <td class="py-3 px-4 text-center">
-                        <button onclick="testGarenaLogin('${acc.username}', '${acc.password}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded text-[11px] font-semibold transition flex items-center gap-1 mx-auto shadow" title="Mở trang Garena SSO và tự động copy username">
-                            🌐 Login SSO
-                        </button>
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="openGarenaSso('${acc.username}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded text-[11px] font-semibold transition shadow" title="Mở trang Garena SSO (Đã copy Username)">
+                                🌐 Login SSO
+                            </button>
+                            <button onclick="navigator.clipboard.writeText('${acc.password}'); alert('Đã copy Mật khẩu: ${acc.password}');" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded text-[11px] font-medium transition" title="Copy Mật Khẩu">
+                                📋 MK
+                            </button>
+                        </div>
                     </td>
                     <td class="py-3 px-4 font-semibold text-emerald-300">${acc.gameName}</td>
                     <td class="py-3 px-4 text-center">
