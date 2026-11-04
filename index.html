@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Quản Lý & Lọc Acc Liên Quân</title>
+    <title>Panel Quản Lý Acc Liên Quân & Garena Check</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -16,18 +16,20 @@
             <div class="flex items-center gap-3">
                 <div class="bg-pink-600/20 p-2.5 rounded-lg border border-pink-500/30 text-pink-400 text-xl font-bold">⚡</div>
                 <div>
-                    <h1 class="text-xl font-bold text-white tracking-wide">Panel Quản Lý & Lọc Acc Liên Quân</h1>
-                    <p class="text-slate-400 text-xs mt-0.5">Chế độ: <span class="text-emerald-400 font-medium">Hỗ trợ Import .txt đa định dạng & Đồng bộ Cloud</span></p>
+                    <h1 class="text-xl font-bold text-white tracking-wide">Panel Quản Lý Acc Liên Quân</h1>
+                    <p class="text-slate-400 text-xs mt-0.5">Trạng thái: <span id="sync-status" class="text-emerald-400 font-medium">Đang tải dữ liệu...</span></p>
                 </div>
             </div>
             <div class="flex items-center gap-3 flex-wrap">
-                <!-- Nút chọn file .txt -->
                 <input type="file" id="txt-file-input" accept=".txt" class="hidden" onchange="handleFileImport(event)">
                 <button onclick="document.getElementById('txt-file-input').click()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow">
-                    📁 Thêm acc từ file .txt
+                    📁 Import file .txt
                 </button>
-                <button onclick="syncDataFromCloud()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow">
+                <button onclick="syncDataFromCloud(true)" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow">
                     🔄 Reload / Đồng bộ Cloud
+                </button>
+                <button onclick="toggleConfigModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold px-3 py-2.5 rounded-lg transition">
+                    ⚙️ Cấu hình Cloud
                 </button>
             </div>
         </div>
@@ -47,28 +49,29 @@
                 <h3 id="stat-used" class="text-2xl font-bold text-blue-400 mt-1">0</h3>
             </div>
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">ACC SẠCH + LEVEL 30</p>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">ACC LEVEL 30</p>
                 <h3 id="stat-lv30" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
             </div>
         </div>
 
         <!-- Khu vực Nhập Lẻ & Nhập Hàng Loạt -->
         <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
-            <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wide border-b border-slate-800 pb-3">➕ Thêm tài khoản (Nhập lẻ hoặc Dán danh sách)</h2>
+            <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wide border-b border-slate-800 pb-3">➕ Thêm tài khoản</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <!-- Nhập lẻ -->
                 <div class="space-y-2">
-                    <label class="block text-xs font-medium text-slate-400">Nhập lẻ (Định dạng: <code class="text-emerald-400">user:pass</code> hoặc <code class="text-emerald-400">user|pass</code>)</label>
+                    <label class="block text-xs font-medium text-slate-400">Nhập lẻ (Format: <code class="text-emerald-400">user:pass</code> hoặc <code class="text-emerald-400">user|pass</code>)</label>
                     <div class="flex gap-2">
                         <input type="text" id="single-input" placeholder="account1:123456" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 font-mono">
-                        <button onclick="addSingleAccount()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-5 py-2 rounded-lg transition shadow whitespace-nowrap">
+                        <input type="number" id="single-level" min="1" max="30" value="1" placeholder="Lv" class="w-20 bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs text-center text-amber-400 focus:outline-none focus:border-emerald-500 font-bold" title="Nhập Level (Mặc định 1)">
+                        <button onclick="addSingleAccount()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition shadow whitespace-nowrap">
                             Thêm lẻ
                         </button>
                     </div>
                 </div>
-                <!-- Dán danh sách hàng loạt -->
+                <!-- Dán hàng loạt -->
                 <div class="space-y-2">
-                    <label class="block text-xs font-medium text-slate-400">Dán danh sách từ file .txt (Mỗi dòng 1 acc)</label>
+                    <label class="block text-xs font-medium text-slate-400">Dán danh sách từ file .txt (Mỗi dòng 1 acc - Lv mặc định: 1)</label>
                     <div class="flex gap-2">
                         <textarea id="bulk-textarea" rows="2" placeholder="account1:123456&#10;account2|789101" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 font-mono"></textarea>
                         <button onclick="addBulkAccounts()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition shadow whitespace-nowrap self-start">
@@ -79,40 +82,29 @@
             </div>
         </div>
 
-        <!-- Bộ lọc & Tìm kiếm -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-lg space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                    <label class="block text-[11px] font-medium text-slate-400 mb-1">🔍 Tìm kiếm (TK, MK, Tên NV)</label>
-                    <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Nhập từ khóa..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-medium text-slate-400 mb-1">📌 Trạng thái Used</label>
-                    <select id="filter-used" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
-                        <option value="all">Tất cả Used</option>
-                        <option value="used">Chỉ lấy Acc Đã Dùng (✅)</option>
-                        <option value="unused">Chỉ lấy Acc Chưa Dùng (❌)</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button onclick="resetFilters()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium py-2 rounded-lg transition">
-                        Đặt lại bộ lọc
-                    </button>
-                </div>
+        <!-- Bộ lọc & Chức năng Xóa/Xuất Dữ Liệu -->
+        <div class="flex flex-col md:flex-row justify-between items-center bg-slate-900 border border-slate-800 rounded-xl p-4 shadow gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full md:w-auto">
+                <input type="text" id="filter-search" oninput="applyFilters()" placeholder="🔍 Tìm kiếm tài khoản..." class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 w-full sm:w-64">
+                <select id="filter-used" onchange="applyFilters()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                    <option value="all">Tất cả Used</option>
+                    <option value="used">Chỉ lấy Acc Đã Dùng (✅)</option>
+                    <option value="unused">Chỉ lấy Acc Chưa Dùng (❌)</option>
+                </select>
             </div>
-        </div>
-
-        <!-- Thanh xuất dữ liệu -->
-        <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-900 border border-slate-800 rounded-xl px-5 py-3 shadow gap-3">
-            <div class="text-xs text-slate-300">
-                Đang hiển thị <span id="filtered-count" class="font-bold text-emerald-400">0</span> tài khoản phù hợp
-            </div>
-            <div class="flex items-center gap-3">
+            
+            <div class="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
+                <button onclick="sortAccountsBySuffix()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow" title="Sắp xếp danh sách tài khoản theo số đuôi tăng dần">
+                    🔢 Xếp số đuôi ⬆️
+                </button>
+                <button id="btn-delete-selected" onclick="deleteSelectedAccounts()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow opacity-50 cursor-not-allowed" disabled>
+                    🗑️ Xóa đã chọn (<span id="selected-count">0</span>)
+                </button>
                 <button onclick="copyFilteredAccounts()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
-                    📋 Copy toàn bộ Acc đang lọc
+                    📋 Copy Acc đã lọc
                 </button>
                 <button onclick="downloadFilteredTxt()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
-                    📥 Tải file .txt đã lọc
+                    📥 Tải file .txt
                 </button>
             </div>
         </div>
@@ -123,50 +115,84 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-950 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
-                            <th class="py-3.5 px-4 text-center w-14">#</th>
-                            <th class="py-3.5 px-4">TÀI KHOẢN (TK)</th>
+                            <th class="py-3.5 px-3 text-center w-10">
+                                <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-600 focus:ring-0 cursor-pointer">
+                            </th>
+                            <th class="py-3.5 px-3 text-center w-12">#</th>
+                            <th class="py-3.5 px-4 cursor-pointer hover:text-white transition" onclick="sortAccountsBySuffix()" title="Bấm vào đây để sắp xếp theo số đuôi">
+                                TÀI KHOẢN (TK) ⇕
+                            </th>
                             <th class="py-3.5 px-4">MẬT KHẨU (MK)</th>
-                            <th class="py-3.5 px-4 text-center w-32">COPY NHANH</th>
-                            <th class="py-3.5 px-4">TÊN NHÂN VẬT (NAME)</th>
-                            <th class="py-3.5 px-4 text-center w-24">LEVEL</th>
-                            <th class="py-3.5 px-4 text-center w-32">BAND</th>
+                            <th class="py-3.5 px-4 text-center w-36">TEST GARENA WEB</th>
+                            <th class="py-3.5 px-4">TÊN NHÂN VẬT</th>
+                            <th class="py-3.5 px-4 text-center w-28">LEVEL</th>
+                            <th class="py-3.5 px-4 text-center w-28">BAND</th>
                             <th class="py-3.5 px-4 text-center w-32">USED</th>
                             <th class="py-3.5 px-4 text-center w-16">XÓA</th>
                         </tr>
                     </thead>
-                    <tbody id="account-table-body" class="divide-y divide-slate-800 text-xs font-sans">
-                        <!-- Dữ liệu render bằng JS -->
-                    </tbody>
+                    <tbody id="account-table-body" class="divide-y divide-slate-800 text-xs font-sans"></tbody>
                 </table>
             </div>
         </div>
 
     </div>
 
-    <!-- Script xử lý logic & Đồng bộ cloud JSONBin -->
+    <!-- Modal Cấu hình JSONBin -->
+    <div id="config-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center hidden p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">⚙️ Cấu Hình Đồng Bộ Đám Mây</h3>
+            <p class="text-xs text-slate-400">Điền thông tin JSONBin.io để đồng bộ dữ liệu đa thiết bị.</p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">JSONBin BIN ID</label>
+                    <input type="text" id="cfg-bin-id" placeholder="vd: 6aeadc60..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-300 mb-1">JSONBin Master Key</label>
+                    <input type="password" id="cfg-api-key" placeholder="vd: $2b$10$..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="toggleConfigModal()" class="px-4 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-semibold rounded-lg">Đóng</button>
+                <button onclick="saveConfig()" class="px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-500 text-xs font-semibold rounded-lg shadow">Lưu & Kết Nối</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic JS -->
     <script>
-        const JSONBIN_BIN_ID = localStorage.getItem("lq_bin_id") || ""; 
-        const JSONBIN_API_KEY = localStorage.getItem("lq_api_key") || "";
+        let JSONBIN_BIN_ID = localStorage.getItem("lq_bin_id") || ""; 
+        let JSONBIN_API_KEY = localStorage.getItem("lq_api_key") || "";
 
         let masterAccounts = [];
         let filteredAccounts = [];
+        let selectedAccIds = new Set();
 
         window.onload = function() {
-            if (!JSONBIN_BIN_ID || !JSONBIN_API_KEY) {
-                const binId = prompt("Nhập JSONBin ID của bạn (Để trống nếu chỉ dùng lưu tạm trên trình duyệt máy này):", "");
-                if (binId) {
-                    const apiKey = prompt("Nhập JSONBin Master Key của bạn:", "");
-                    localStorage.setItem("lq_bin_id", binId);
-                    localStorage.setItem("lq_api_key", apiKey);
-                    location.reload();
-                    return;
-                }
-            }
-            syncDataFromCloud();
+            document.getElementById("cfg-bin-id").value = JSONBIN_BIN_ID;
+            document.getElementById("cfg-api-key").value = JSONBIN_API_KEY;
+            syncDataFromCloud(false);
         };
 
-        async function syncDataFromCloud() {
+        function toggleConfigModal() {
+            document.getElementById("config-modal").classList.toggle("hidden");
+        }
+
+        function saveConfig() {
+            JSONBIN_BIN_ID = document.getElementById("cfg-bin-id").value.trim();
+            JSONBIN_API_KEY = document.getElementById("cfg-api-key").value.trim();
+            localStorage.setItem("lq_bin_id", JSONBIN_BIN_ID);
+            localStorage.setItem("lq_api_key", JSONBIN_API_KEY);
+            toggleConfigModal();
+            syncDataFromCloud(true);
+        }
+
+        async function syncDataFromCloud(showAlert = false) {
+            const statusEl = document.getElementById("sync-status");
             if (JSONBIN_BIN_ID && JSONBIN_API_KEY) {
+                statusEl.innerText = "⏳ Đang đồng bộ từ Cloud...";
+                statusEl.className = "text-amber-400 font-medium";
                 try {
                     const res = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
                         headers: { 'X-Master-Key': JSONBIN_API_KEY }
@@ -174,14 +200,22 @@
                     const data = await res.json();
                     if (data && data.record) {
                         masterAccounts = data.record.accounts || [];
+                        statusEl.innerText = "☁️ Đã đồng bộ Cloud đa thiết bị";
+                        statusEl.className = "text-emerald-400 font-medium";
+                        if (showAlert) alert("✅ Đồng bộ dữ liệu thành công từ Cloud!");
                     }
                 } catch (err) {
-                    console.error("Lỗi tải dữ liệu từ cloud:", err);
+                    statusEl.innerText = "⚠️ Lỗi kết nối Cloud (Lưu máy cục bộ)";
+                    statusEl.className = "text-rose-400 font-medium";
                     loadFromLocalStorage();
+                    if (showAlert) alert("❌ Đồng bộ thất bại! Kiểm tra lại Bin ID/Master Key.");
                 }
             } else {
+                statusEl.innerText = "📱 Đang lưu trên máy này (Chưa cấu hình Cloud)";
+                statusEl.className = "text-amber-400 font-medium";
                 loadFromLocalStorage();
             }
+            selectedAccIds.clear();
             applyFilters();
         }
 
@@ -198,7 +232,7 @@
                         body: JSON.stringify({ accounts: masterAccounts })
                     });
                 } catch (err) {
-                    console.error("Lỗi lưu dữ liệu lên cloud:", err);
+                    console.error("Lỗi lưu Cloud:", err);
                 }
             }
         }
@@ -214,26 +248,50 @@
             localStorage.setItem("lq_accounts_standalone", JSON.stringify(masterAccounts));
         }
 
-        // Hàm phân tích văn bản cực kỳ mạnh mẽ: Hỗ trợ dấu `:`, `|`, khoảng trắng, tab và tự động loại bỏ ký tự rác
-        function parseAndAddLines(textLines) {
+        /* --- TEST LOGIN GARENA WEB --- */
+        function testGarenaLogin(username, password) {
+            // Copy mật khẩu hoặc thông tin vào clipboard để tiện paste nhanh
+            navigator.clipboard.writeText(password);
+            
+            // Link OAuth Garena chính xác theo yêu cầu
+            const garenaUrl = "https://auth.garena.com/universal/oauth?client_id=200016&response_type=token&redirect_uri=https%3A%2F%2Fauth.member.garena.vn%2Fcallback&all_platforms=1&platform=1&locale=vi-VN&state=%7B%22app_id%22%3A200016%2C%22nonce%22%3A165224998%7D";
+            
+            // Mở tab đăng nhập Garena
+            window.open(garenaUrl, '_blank');
+            alert(`🌐 Đã mở trang đăng nhập Garena!\n\n- Tài khoản: ${username}\n- Mật khẩu: Đã được copy tự động vào bộ nhớ tạm (Chỉ cần nhấn Ctrl+V để dán).`);
+        }
+
+        /* SẮP XẾP THEO SỐ ĐUÔI TĂNG DẦN */
+        function sortAccountsBySuffix() {
+            if (masterAccounts.length === 0) return alert("Chưa có tài khoản nào để sắp xếp!");
+
+            masterAccounts.sort((a, b) => {
+                return a.username.localeCompare(b.username, undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            saveToCloud();
+            applyFilters();
+            alert("✅ Đã sắp xếp danh sách tài khoản theo số đuôi tăng dần!");
+        }
+
+        /* LEVEL MẶC ĐỊNH LÀ 1 KHI THÊM MỚI */
+        function parseAndAddLines(textLines, defaultLevel = 1) {
             let count = 0;
             textLines.forEach(line => {
                 line = line.trim();
-                if (!line || line.startsWith("#") || line.startsWith("//")) return; // Bỏ qua dòng trống hoặc chú thích
+                if (!line || line.startsWith("#") || line.startsWith("//")) return;
 
-                let username = "";
-                let password = "";
-
+                let username = "", password = "";
                 if (line.includes(":")) {
                     const parts = line.split(":");
                     username = parts[0].trim();
-                    password = parts.slice(1).join(":").trim(); // Giữ nguyên dấu : nếu mật khẩu chứa dấu :
+                    password = parts.slice(1).join(":").trim();
                 } else if (line.includes("|")) {
                     const parts = line.split("|");
                     username = parts[0].trim();
                     password = parts.slice(1).join("|").trim();
                 } else {
-                    const parts = line.split(/\s+/); // Hỗ trợ trường hợp cách nhau bằng khoảng trắng hoặc tab
+                    const parts = line.split(/\s+/);
                     if (parts.length >= 2) {
                         username = parts[0].trim();
                         password = parts.slice(1).join(" ").trim();
@@ -246,60 +304,59 @@
                         username: username,
                         password: password,
                         gameName: `Player_${username.substring(0, 5)}`,
-                        level: 30,
-                        liveStatus: "✅", // Luôn luôn live ổn định
-                        used: false       // Mặc định chưa dùng
+                        level: defaultLevel,
+                        liveStatus: "✅",
+                        used: false
                     };
-
                     masterAccounts = masterAccounts.filter(acc => acc.username !== username);
-                    masterAccounts.unshift(newAcc);
+                    masterAccounts.push(newAcc);
                     count++;
                 }
             });
 
             if (count > 0) {
+                masterAccounts.sort((a, b) => a.username.localeCompare(b.username, undefined, { numeric: true, sensitivity: 'base' }));
                 saveToCloud();
                 applyFilters();
-                alert(`Đã thêm thành công ${count} tài khoản vào hệ thống!`);
+                alert(`Đã thêm thành công ${count} tài khoản (Level mặc định: 1) và tự động sắp xếp!`);
             } else {
-                alert("Không tìm thấy định dạng hợp lệ! Vui lòng kiểm tra lại file .txt hoặc định dạng user:pass / user|pass.");
+                alert("Không tìm thấy định dạng hợp lệ!");
             }
         }
 
         function addSingleAccount() {
             const val = document.getElementById("single-input").value.trim();
-            if (!val) {
-                alert("Vui lòng nhập tài khoản!");
-                return;
-            }
-            parseAndAddLines([val]);
+            const level = parseInt(document.getElementById("single-level").value) || 1;
+            if (!val) return alert("Vui lòng nhập tài khoản!");
+            parseAndAddLines([val], level);
             document.getElementById("single-input").value = "";
         }
 
         function addBulkAccounts() {
             const text = document.getElementById("bulk-textarea").value.trim();
-            if (!text) {
-                alert("Vui lòng dán danh sách tài khoản vào ô!");
-                return;
-            }
-            parseAndAddLines(text.split(/\r?\n/));
+            if (!text) return alert("Vui lòng dán danh sách tài khoản!");
+            parseAndAddLines(text.split(/\r?\n/), 1);
             document.getElementById("bulk-textarea").value = "";
         }
 
         function handleFileImport(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
-                const text = e.target.result;
-                parseAndAddLines(text.split(/\r?\n/));
-            };
-            reader.onerror = function() {
-                alert("Lỗi đọc file. Hãy thử dán nội dung trực tiếp vào ô văn bản!");
+                parseAndAddLines(e.target.result.split(/\r?\n/), 1);
             };
             reader.readAsText(file, "UTF-8");
-            event.target.value = ""; // Reset input file để chọn lại file cũ nếu cần
+            event.target.value = "";
+        }
+
+        function updateLevel(id, newLevel) {
+            const acc = masterAccounts.find(a => a.id === id);
+            if (acc) {
+                acc.level = parseInt(newLevel) || 1;
+                saveToCloud();
+                renderUI();
+            }
         }
 
         function toggleUsedStatus(id, state) {
@@ -311,9 +368,71 @@
             }
         }
 
+        function toggleSelectAcc(id, isChecked) {
+            if (isChecked) {
+                selectedAccIds.add(id);
+            } else {
+                selectedAccIds.delete(id);
+            }
+            updateDeleteButtonState();
+        }
+
+        function toggleSelectAll(isChecked) {
+            filteredAccounts.forEach(acc => {
+                if (isChecked) {
+                    selectedAccIds.add(acc.id);
+                } else {
+                    selectedAccIds.delete(acc.id);
+                }
+            });
+            renderUI();
+        }
+
+        function updateDeleteButtonState() {
+            const count = selectedAccIds.size;
+            document.getElementById("selected-count").innerText = count;
+            const btn = document.getElementById("btn-delete-selected");
+
+            if (count > 0) {
+                btn.disabled = false;
+                btn.classList.remove("opacity-50", "cursor-not-allowed");
+            } else {
+                btn.disabled = true;
+                btn.classList.add("opacity-50", "cursor-not-allowed");
+            }
+
+            const selectAllBox = document.getElementById("select-all-checkbox");
+            if (filteredAccounts.length > 0 && filteredAccounts.every(acc => selectedAccIds.has(acc.id))) {
+                selectAllBox.checked = true;
+            } else {
+                selectAllBox.checked = false;
+            }
+        }
+
+        function deleteSelectedAccounts() {
+            const count = selectedAccIds.size;
+            if (count === 0) return;
+
+            if (confirm(`Bạn có chắc chắn muốn XÓA HÀNG LOẠT ${count} tài khoản đã chọn?`)) {
+                masterAccounts = masterAccounts.filter(acc => !selectedAccIds.has(acc.id));
+                selectedAccIds.clear();
+                saveToCloud();
+                applyFilters();
+                alert(`Đã xóa thành công ${count} tài khoản!`);
+            }
+        }
+
+        function deleteAccount(id) {
+            if (confirm("Bạn có chắc muốn xóa tài khoản này?")) {
+                masterAccounts = masterAccounts.filter(a => a.id !== id);
+                selectedAccIds.delete(id);
+                saveToCloud();
+                applyFilters();
+            }
+        }
+
         function applyFilters() {
             let result = [...masterAccounts];
-
             const keyword = document.getElementById("filter-search").value.toLowerCase().trim();
             if (keyword) {
                 result = result.filter(acc => 
@@ -322,7 +441,6 @@
                     acc.gameName.toLowerCase().includes(keyword)
                 );
             }
-
             const usedFilter = document.getElementById("filter-used").value;
             if (usedFilter === "used") result = result.filter(acc => acc.used === true);
             else if (usedFilter === "unused") result = result.filter(acc => acc.used === false);
@@ -331,56 +449,53 @@
             renderUI();
         }
 
-        function resetFilters() {
-            document.getElementById("filter-search").value = "";
-            document.getElementById("filter-used").value = "all";
-            applyFilters();
-        }
-
         function renderUI() {
-            const total = masterAccounts.length;
-            const cleanCount = masterAccounts.filter(acc => acc.liveStatus === "✅").length;
-            const usedCount = masterAccounts.filter(acc => acc.used === true).length;
-            const lv30Count = masterAccounts.filter(acc => acc.liveStatus === "✅" && acc.level === 30).length;
-
-            document.getElementById("stat-total").innerText = total.toLocaleString();
-            document.getElementById("stat-clean").innerText = cleanCount.toLocaleString();
-            document.getElementById("stat-used").innerText = usedCount.toLocaleString();
-            document.getElementById("stat-lv30").innerText = lv30Count.toLocaleString();
-            document.getElementById("filtered-count").innerText = filteredAccounts.length.toLocaleString();
+            document.getElementById("stat-total").innerText = masterAccounts.length.toLocaleString();
+            document.getElementById("stat-clean").innerText = masterAccounts.filter(acc => acc.liveStatus === "✅").length.toLocaleString();
+            document.getElementById("stat-used").innerText = masterAccounts.filter(acc => acc.used === true).length.toLocaleString();
+            document.getElementById("stat-lv30").innerText = masterAccounts.filter(acc => acc.level === 30).length.toLocaleString();
 
             const tbody = document.getElementById("account-table-body");
             tbody.innerHTML = "";
 
             if (filteredAccounts.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-slate-500 italic">Chưa có tài khoản nào trong hệ thống.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="py-10 text-center text-slate-500 italic">Chưa có tài khoản nào trong hệ thống.</td></tr>`;
+                updateDeleteButtonState();
                 return;
             }
 
             filteredAccounts.forEach((acc, index) => {
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-800/50 transition";
-
-                const bandBadge = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-semibold">✅ SẠCH</span>`;
-
                 const isUsed = acc.used === true;
+                const isChecked = selectedAccIds.has(acc.id);
+
                 const activeCheckStyle = isUsed ? "opacity-100 scale-110 font-bold text-emerald-400 bg-emerald-500/20 border-emerald-500/40 shadow-sm" : "opacity-25 grayscale hover:opacity-50 text-slate-500 border-slate-800";
                 const activeCrossStyle = !isUsed ? "opacity-100 scale-110 font-bold text-rose-500 bg-rose-500/20 border-rose-500/40 shadow-sm" : "opacity-25 grayscale hover:opacity-50 text-slate-500 border-slate-800";
 
                 tr.innerHTML = `
-                    <td class="py-3 px-4 text-center font-medium text-slate-500">${index + 1}</td>
-                    <td class="py-3 px-4 font-mono text-slate-300">${acc.username}</td>
+                    <td class="py-3 px-3 text-center">
+                        <input type="checkbox" ${isChecked ? "checked" : ""} onchange="toggleSelectAcc('${acc.id}', this.checked)" class="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-600 focus:ring-0 cursor-pointer">
+                    </td>
+                    <td class="py-3 px-3 text-center font-medium text-slate-500">${index + 1}</td>
+                    <td class="py-3 px-4 font-mono text-slate-300 font-semibold">${acc.username}</td>
                     <td class="py-3 px-4 font-mono text-slate-400">••••••••</td>
                     <td class="py-3 px-4 text-center">
-                        <button onclick="navigator.clipboard.writeText('${acc.username}:${acc.password}'); alert('Đã copy: ${acc.username}:${acc.password}');" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded text-[11px] font-medium transition mx-auto">📋 Copy TK:MK</button>
+                        <button onclick="testGarenaLogin('${acc.username}', '${acc.password}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded text-[11px] font-semibold transition flex items-center gap-1 mx-auto shadow" title="Mở trang Garena OAuth và tự động copy pass">
+                            🌐 Login Web
+                        </button>
                     </td>
                     <td class="py-3 px-4 font-semibold text-emerald-300">${acc.gameName}</td>
-                    <td class="py-3 px-4 text-center font-bold text-amber-400">${acc.level}</td>
-                    <td class="py-3 px-4 text-center">${bandBadge}</td>
+                    <td class="py-3 px-4 text-center">
+                        <input type="number" min="1" max="30" value="${acc.level}" onchange="updateLevel('${acc.id}', this.value)" class="w-14 bg-slate-950 border border-slate-800 rounded text-center text-amber-400 font-bold py-0.5 focus:outline-none focus:border-emerald-500">
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-semibold">✅ SẠCH</span>
+                    </td>
                     <td class="py-3 px-4 text-center">
                         <div class="flex items-center justify-center gap-2">
-                            <button onclick="toggleUsedStatus('${acc.id}', true)" title="Đánh dấu Đã Dùng" class="px-2 py-1 rounded border transition duration-200 ${activeCheckStyle}">✅</button>
-                            <button onclick="toggleUsedStatus('${acc.id}', false)" title="Đánh dấu Chưa Dùng" class="px-2 py-1 rounded border transition duration-200 ${activeCrossStyle}">❌</button>
+                            <button onclick="toggleUsedStatus('${acc.id}', true)" title="Đã Dùng" class="px-2 py-1 rounded border transition duration-200 ${activeCheckStyle}">✅</button>
+                            <button onclick="toggleUsedStatus('${acc.id}', false)" title="Chưa Dùng" class="px-2 py-1 rounded border transition duration-200 ${activeCrossStyle}">❌</button>
                         </div>
                     </td>
                     <td class="py-3 px-4 text-center">
@@ -389,37 +504,20 @@
                 `;
                 tbody.appendChild(tr);
             });
-        }
 
-        function deleteAccount(id) {
-            if (confirm("Bạn có chắc muốn xóa tài khoản này?")) {
-                masterAccounts = masterAccounts.filter(a => a.id !== id);
-                saveToCloud();
-                applyFilters();
-            }
+            updateDeleteButtonState();
         }
 
         function copyFilteredAccounts() {
-            if (filteredAccounts.length === 0) {
-                alert("Không có tài khoản nào để copy!");
-                return;
-            }
+            if (filteredAccounts.length === 0) return alert("Không có tài khoản nào để copy!");
             const text = filteredAccounts.map(acc => `${acc.username}:${acc.password}`).join("\n");
             const textarea = document.createElement("textarea");
             textarea.value = text;
             document.body.appendChild(textarea);
             textarea.select();
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    alert(`Đã copy thành công ${filteredAccounts.length} tài khoản!`);
-                } else {
-                    alert("Không thể copy tự động. Hãy dùng nút tải file .txt nhé!");
-                }
-            } catch (err) {
-                alert("Lỗi bộ nhớ đệm khi copy số lượng lớn. Vui lòng tải file .txt!");
-            }
+            document.execCommand('copy');
             document.body.removeChild(textarea);
+            alert(`Đã copy thành công ${filteredAccounts.length} tài khoản!`);
         }
 
         function downloadFilteredTxt() {
