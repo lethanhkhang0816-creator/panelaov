@@ -123,7 +123,7 @@
                                 TÀI KHOẢN (TK) ⇕
                             </th>
                             <th class="py-3.5 px-4">MẬT KHẨU (MK)</th>
-                            <th class="py-3.5 px-4 text-center w-40">LOGIN GARENA SSO</th>
+                            <th class="py-3.5 px-4 text-center w-44">LOGIN GARENA SSO</th>
                             <th class="py-3.5 px-4">TÊN NHÂN VẬT</th>
                             <th class="py-3.5 px-4 text-center w-28">LEVEL</th>
                             <th class="py-3.5 px-4 text-center w-28">BAND</th>
@@ -263,10 +263,10 @@
 
         /* --- LOGIN GARENA SSO: MỞ WEB VÀ TỰ ĐỘNG COPY TÊN TÀI KHOẢN --- */
         function openGarenaSso(username) {
-            // Copy Username vào clipboard trước để bạn Ctrl+V vào web SSO
+            // Copy Username vào clipboard để bấm Ctrl+V vào ô tài khoản
             navigator.clipboard.writeText(username);
             
-            // Link SSO Garena theo yêu cầu
+            // Link SSO Garena chính xác
             const garenaSsoUrl = "https://sso.garena.com/universal/login?app_id=10100&redirect_uri=https%3A%2F%2Faccount.garena.com%2F&locale=vi-VN";
             
             window.open(garenaSsoUrl, '_blank');
@@ -481,10 +481,10 @@
                     <td class="py-3 px-4 font-mono text-slate-400">••••••••</td>
                     <td class="py-3 px-4 text-center">
                         <div class="flex items-center justify-center gap-1.5">
-                            <button onclick="openGarenaSso('${acc.username}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded text-[11px] font-semibold transition shadow" title="Mở trang Garena SSO (Đã copy Username)">
-                                🌐 Login SSO
+                            <button onclick="openGarenaSso('${acc.username}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded text-[11px] font-semibold transition shadow" title="Mở trang Garena SSO & Tự động copy Tên tài khoản">
+                                🌐 Login & Copy TK
                             </button>
-                            <button onclick="navigator.clipboard.writeText('${acc.password}'); alert('Đã copy Mật khẩu: ${acc.password}');" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded text-[11px] font-medium transition" title="Copy Mật Khẩu">
+                            <button onclick="navigator.clipboard.writeText('${acc.password}'); alert('Đã copy Mật khẩu: ${acc.password}');" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded text-[11px] font-medium transition" title="Copy Mật khẩu">
                                 📋 MK
                             </button>
                         </div>
